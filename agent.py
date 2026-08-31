@@ -1,50 +1,65 @@
 from dotenv import load_dotenv
 from langchain.agents import create_agent
+from langchain.agents.middleware import before_model
 from langchain.tools import tool
 import requests
 from pydantic import BaseModel, Field
 from langchain_core.utils.uuid import uuid7
+from deepagents.backends import StateBackend
+from deepagents.middleware import FilesystemMiddleware
 from langgraph.checkpoint.memory import InMemorySaver
 load_dotenv()
 
-class WeatherResponse(BaseModel):
-    city: str = Field(description="Name of the city")
-    temperature: float = Field(description="Temperature in Celsius")
-    condition: str = Field(description="Current weather condition")
+
+
+@before_model
+def my_middleware(state, runtime):
+    print("\n[MIDDLEWARE] Before Gemini is called")
+    print("[MIDDLEWARE] User message:", state["messages"][-1].content)
 
 
 @tool
 def get_weather(city: str) -> str:
     """Get the current weather for a city."""
 
-    url = f"https://wttr.in/{city}?format=3"
+    print("\nWEATHER TOOL WAS CALLED")
+    print("City:", city)
 
+    url = f"https://wttr.in/{city}?format=3"
     response = requests.get(url)
 
+    print("API RESULT:", response.text)
+
     return response.text
+
+
+backend = StateBackend()
 
 
 agent = create_agent(
     model="google_genai:gemini-3.6-flash",
     tools=[get_weather],
-    system_prompt="You are a helpful weather assistant.",
-    response_format=WeatherResponse,
-    checkpointer=InMemorySaver(),
+    system_prompt="""
+You are a weather assistant.
+
+IMPORTANT:
+YOU HAVE ACCESS TO TOOLS USE THEM WHEN NEEDED.
+""",
+    middleware=[
+        my_middleware,
+        FilesystemMiddleware(backend=backend)
+    ],
 )
 
-config = {
-    "configurable": {
-        "thread_id": str(uuid7())
-    }
-} 
-
 while True:
-    user_input = input("\nHow CAN I HELP YOU GORGEOUS: ")
+    user_input = input("\nWHATS THE MATTER GORGEOUS: ")
 
     if user_input.lower() == "exit":
         break
 
-    response = agent.invoke(
+    print("\n--- STREAMING ---")
+
+    for chunk in agent.stream(
         {
             "messages": [
                 {
@@ -53,13 +68,20 @@ while True:
                 }
             ]
         },
-        config=config
-    )
+        config=config,
+        stream_mode="updates"
+    ):
+        print("\nCHUNK:")
+        print(chunk)
+        if "model" in chunk:
+            message = chunk["model"]["messages"][0]
 
-    content = response["messages"][-1].content
+            if message.content:
+                if isinstance(message.content, list):
+                    for item in message.content:
+                        if isinstance(item, dict) and item.get("type") == "text":
+                            print(item["text"], end="", flush=True)
+                else:
+                    print(message.content, end="", flush=True)
 
-    if isinstance(content, list):
-        print("Agent:", content[0]["text"])
-    else:
-        print("Agent:", content)
-
+    print()
