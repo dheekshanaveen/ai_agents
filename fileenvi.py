@@ -1,61 +1,19 @@
-from dotenv import load_dotenv
-from langchain.agents import create_agent
 from deepagents.backends import StateBackend
-from deepagents.middleware import FilesystemMiddleware
-
-load_dotenv()
 
 
-# ============================================
-# FILE ENVIRONMENT
-# ============================================
-
+# Create an environment/backend
 backend = StateBackend()
 
 
-# ============================================
-# AGENT
-# ============================================
-
-agent = create_agent(
-    model="google_genai:gemini-3.6-flash",
-
-    system_prompt="""
-You are a helpful assistant.
-
-You have access to a filesystem.
-Use the filesystem tools when you need to
-create, read, write, or modify files.
-you should use tools when you need to perform actions that require access to the filesystem.
-""",
-
-    middleware=[
-        FilesystemMiddleware(backend=backend)
-    ],
+# Write something into the environment
+backend.write(
+    "/notes.txt",
+    "This is my first file stored in the environment."
 )
 
 
-# ============================================
-# CHAT LOOP
-# ============================================
+# Read it back
+content = backend.read("/notes.txt")
 
-while True:
-
-    user_input = input("\nWHAT CAN I DO FOR YOU BEAUTIFUL: ")
-
-    if user_input.lower() == "exit":
-        break
-
-    response = agent.invoke(
-        {
-            "messages": [
-                {
-                    "role": "user",
-                    "content": user_input
-                }
-            ]
-        }
-    )
-
-    print("\nAGENT:")
-    print(response["messages"][-1].content)
+print("CONTENT STORED IN ENVIRONMENT:")
+print(content)
