@@ -18,6 +18,43 @@ def my_middleware(state, runtime):
     print("[MIDDLEWARE] User message:", state["messages"][-1].content)
 
 
+@before_model
+def weather_guardrail(state, runtime):
+
+    user_message = state["messages"][-1].content.lower()
+
+    print("\n[GUARDRAIL] Checking request...")
+
+    weather_words = [
+        "weather",
+        "temperature",
+        "rain",
+        "raining",
+        "forecast",
+        "climate",
+        "hot",
+        "cold",
+        "wind",
+        "humidity",
+        "snow",
+    ]
+
+    is_weather_question = any(
+        word in user_message
+        for word in weather_words
+    )
+
+    if not is_weather_question:
+
+        print("[GUARDRAIL] BLOCKED")
+
+        raise ValueError(
+            "This agent only accepts weather related questions."
+        )
+
+    print("[GUARDRAIL] ALLOWED")
+
+
 @tool
 def get_weather(city: str) -> str:
     """Get the current weather for a city."""
@@ -39,7 +76,6 @@ backend = StateBackend()
 agent = create_agent(
     model="google_genai:gemini-3.6-flash",
     tools=[get_weather],
-    name="WeatherAgent",
     system_prompt="""
 You are a weather assistant.
 
@@ -69,8 +105,11 @@ while True:
                 }
             ]
         },
-        config=config,
-        stream_mode="updates"
+config = {
+    "configurable": {
+        "thread_id": str(uuid7())
+    }
+}
     ):
         print("\nCHUNK:")
         print(chunk)
