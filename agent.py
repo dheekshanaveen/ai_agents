@@ -39,6 +39,7 @@ backend = StateBackend()
 agent = create_agent(
     model="google_genai:gemini-3.6-flash",
     tools=[get_weather],
+    name="WeatherAgent",
     system_prompt="""
 You are a weather assistant.
 

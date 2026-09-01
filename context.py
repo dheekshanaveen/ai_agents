@@ -5,7 +5,7 @@ load_dotenv()
 
 agent = create_agent(
     model="google_genai:gemini-3.6-flash",
-
+    name="CodingAssistant",
     system_prompt="""
 You are a helpful coding assistant.
 

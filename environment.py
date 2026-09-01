@@ -13,7 +13,7 @@ backend = StateBackend()
 # 2. Create the agent
 agent = create_agent(
     model="google_genai:gemini-3.6-flash",
-
+    name="FileAgent",
     system_prompt="""
 You are an assistant that can work with files.
 
@@ -36,19 +36,9 @@ result = agent.invoke(
             {
                 "role": "user",
                 "content": """
-Create a file called notes.txt.
+Create a file called dhee.txt
 
-Write this content into it:
-
-Hello from my agent environment!
-This is my first file.
-
-Then edit the file by changing:
-"This is my first file."
-
-to:
-
-"This is my edited file."
+and write everything you know aabout me in it, like what i am learning and doing. 
 
 Finally, read the file and return its final contents.
 """
