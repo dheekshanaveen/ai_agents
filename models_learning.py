@@ -207,10 +207,6 @@ def demo_token_usage():
     print(response.usage_metadata)
 
 
-# ============================================================
-# 9. MODEL EXCEPTIONS
-# ============================================================
-
 def demo_exceptions():
 
     print("\n========== MODEL EXCEPTIONS ==========")
@@ -257,9 +253,6 @@ def demo_rate_limiting():
     print(response.content)
 
 
-# ============================================================
-# 11. CONFIGURABLE MODEL
-# ============================================================
 
 def demo_configurable_model():
 
@@ -289,9 +282,6 @@ def demo_configurable_model():
     print(response.content)
 
 
-# ============================================================
-# 12. DYNAMIC MODEL SELECTION
-# ============================================================
 
 def choose_model(task: str):
 
