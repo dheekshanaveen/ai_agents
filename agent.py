@@ -11,7 +11,6 @@ from langgraph.checkpoint.memory import InMemorySaver
 load_dotenv()
 
 
-
 @before_model
 def my_middleware(state, runtime):
     print("\n[MIDDLEWARE] Before Gemini is called")
@@ -76,11 +75,19 @@ backend = StateBackend()
 agent = create_agent(
     model="google_genai:gemini-3.6-flash",
     tools=[get_weather],
-    system_prompt="""
+system_prompt="""
 You are a weather assistant.
 
+You ONLY answer questions related to weather.
+
+If the user asks anything unrelated to weather, do not answer the question.
+Instead, say:
+
+"I am a weather assistant. I can only help with weather related questions. What would you like to know about the weather?"
+
 IMPORTANT:
-YOU HAVE ACCESS TO TOOLS USE THEM WHEN NEEDED.
+You have access to the get_weather tool.
+Use it whenever the user asks for current weather information.
 """,
     middleware=[
         my_middleware,
@@ -123,5 +130,4 @@ config = {
                             print(item["text"], end="", flush=True)
                 else:
                     print(message.content, end="", flush=True)
-
     print()
